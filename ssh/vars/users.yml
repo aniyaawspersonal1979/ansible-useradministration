@@ -1,0 +1,12 @@
+---
+create_users:
+  - username: vinodh
+    groups: sysadmin
+  - username: shahan
+    groups: [dbadmin, networkadmin]
+  - username: thanikesh
+    groups: sysadmin
+  - username: testuser
+    groups: networkadmin
+
+delete_users: []

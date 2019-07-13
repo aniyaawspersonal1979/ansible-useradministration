@@ -1,0 +1,35 @@
+---
+  - include_vars: users.yml
+  - include_vars: sudofile.yml
+
+  - name: creating sudoers file 
+    action: template src=sudoers.j2 dest=/etc/sudoers validate='/usr/sbin/visudo -cf %s'
+
+  - name: creating the groups
+    group: name={{ item }} state=present
+    with_items: '{{sudofilecontent}}'
+
+  # Using openssl passwd -1 -salt SaltSalt SecretPassword    
+
+  - name: Create users with home directory
+    user: name={{ item.username }} password="$1$SaltSalt$EsFQwtda5dTKlQwrfx3uY." update_password=on_create shell=/bin/bash createhome=yes groups={{ item.groups }} append=yes comment='Created by Ansible'
+    with_items: '{{create_users}}'
+    ignore_errors: true
+    register: user_status
+
+  - set_fact:
+      data: "{{ data|default({}) | combine( {item.name: item.changed} ) }}"
+    with_items: "{{user_status.results}}"
+    no_log: True
+
+  - name: Force user to change the password 
+    shell: chage -d 0 {{ item.key }}
+    when: item.value
+    with_dict: "{{ data }}"
+
+
+  - name: Deleting the users 
+    user: name={{ item }} state=absent remove=yes force=true
+    with_items: '{{delete_users}}'
+    ignore_errors: true
+
