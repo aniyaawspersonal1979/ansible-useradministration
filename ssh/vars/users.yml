@@ -2,11 +2,15 @@
 create_users:
   - username: vinodh
     groups: sysadmin
+    servers:
+      - slave1
   - username: shahan
     groups: [dbadmin, networkadmin]
-  - username: thanikesh
-    groups: sysadmin
-  - username: testuser
-    groups: networkadmin
+    servers:
+      - ansible2
+      - slave1
 
-delete_users: []
+delete_users:
+  - username: shahan
+    servers:
+      - slave1

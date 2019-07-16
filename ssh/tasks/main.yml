@@ -12,24 +12,37 @@
   # Using openssl passwd -1 -salt SaltSalt SecretPassword    
 
   - name: Create users with home directory
-    user: name={{ item.username }} password="$1$SaltSalt$EsFQwtda5dTKlQwrfx3uY." update_password=on_create shell=/bin/bash createhome=yes groups={{ item.groups }} append=yes comment='Created by Ansible'
-    with_items: '{{create_users}}'
-    ignore_errors: true
+    user: name={{ item.0.username }} password="$1$SaltSalt$EsFQwtda5dTKlQwrfx3uY." update_password=on_create shell=/bin/bash createhome=yes groups={{ item.0.groups }} append=yes comment={{item.1}}
+    delegate_to: "{{item.1}}"
+    with_subelements:
+      - "{{create_users}}"
+      - servers
+#    ignore_errors: true
     register: user_status
 
+
   - set_fact:
-      data: "{{ data|default({}) | combine( {item.name: item.changed} ) }}"
+      data: "{{ data|default({}) | combine( {item.name: [item.changed,item.item[1]]} ) }}"
     with_items: "{{user_status.results}}"
-    no_log: True
+#    no_log: True
 
   - name: Force user to change the password 
     shell: chage -d 0 {{ item.key }}
-    when: item.value
+    delegate_to: "{{item.value[1]}}"
+    when: item.value[0]
     with_dict: "{{ data }}"
 
+  - name: Configuring sshd_config file
+    template: src=sshd_config.j2 dest=/etc/ssh/sshd_config
+    delegate_to: "{{item.value[1]}}"
+    with_dict: "{{ data }}"
+    notify: sshd_reload
 
   - name: Deleting the users 
-    user: name={{ item }} state=absent remove=yes force=true
-    with_items: '{{delete_users}}'
+    user: name={{ item.0.username }} state=absent remove=yes force=true
+    delegate_to: "{{item.1}}"
+    with_subelements:
+      - "{{delete_users}}"
+      - servers
     ignore_errors: true
 
