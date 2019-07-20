@@ -1,3 +1,4 @@
 [slaves]
 slave1
-ansible2
+slave2
+slave3

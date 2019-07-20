@@ -9,12 +9,12 @@ sudofilecontent:
     commands:
       - /sbin/useradd
       - /sbin/reboot
+      - /sbin/mount
+      - /sbin/shutdown
     servers:
-      - controller
-      - slave1
-      - ansible2
+      - ALL
   networkadmin:
     commands:
       - /sbin/userdel
     servers:
-      - slave1
+      - ALL
