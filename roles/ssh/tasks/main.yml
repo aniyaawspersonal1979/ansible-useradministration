@@ -1,0 +1,50 @@
+---
+  - include_vars: users.yml
+  - include_vars: sudofile.yml
+
+  - name: creating sudoers file 
+    action: template src=sudoers.j2 dest=/etc/sudoers validate='/usr/sbin/visudo -cf %s'
+
+  - name: creating the groups
+    group: name={{ item }} state=present
+    with_items: '{{sudofilecontent}}'
+
+  # Using openssl passwd -1 -salt SaltSalt SecretPassword    
+
+  - name: Create users with home directory
+    user: name={{ item.0.username }} password="$1$SaltSalt$EsFQwtda5dTKlQwrfx3uY." update_password=on_create shell=/bin/bash create_home=yes groups={{ item.0.groups }} append=yes comment={{item.1}}
+    delegate_to: "{{item.1}}"
+    with_subelements:
+      - "{{create_users}}"
+      - servers
+#    ignore_errors: true
+    register: user_status
+
+
+  - set_fact:
+    #      data: "{{ data|default({}) | combine( {item.name: [item.changed,item.item[1]]} ) }}"
+      data: "{{ data|default([]) + [ {'name': item.name, 'server': item.item[1], 'status': item.changed }] }}"
+    with_items: "{{user_status.results}}"
+    no_log: True
+
+
+  - name: Force user to change the password 
+    shell: chage -d 0 {{ item.name }}
+    delegate_to: "{{item.server}}"
+    when: item.status
+    with_items: "{{data}}"
+
+  - block:
+    - name: configuring sshd file
+      template: src=sshd_config.j2 dest=/etc/ssh/sshd_config
+    - name: refreshing sshd deamon
+      command: systemctl reload sshd
+      ignore_errors: true
+    no_log: True
+
+  - name: Deleting the users 
+    user: name={{ item }} state=absent remove=yes force=true
+    with_items:
+      - "{{delete_users}}"
+    ignore_errors: true
+

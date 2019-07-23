@@ -1,0 +1,20 @@
+sudofilecontent:
+  sysadmin:
+    commands:
+      - ALL
+    servers:
+      - ALL
+
+  dbadmin:
+    commands:
+      - /sbin/useradd
+      - /sbin/reboot
+      - /sbin/mount
+      - /sbin/shutdown
+    servers:
+      - ALL
+  networkadmin:
+    commands:
+      - /sbin/userdel
+    servers:
+      - ALL
