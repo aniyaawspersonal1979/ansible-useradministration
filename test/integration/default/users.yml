@@ -1,0 +1,9 @@
+---
+create_users:
+  - username: test
+    groups: sysadmin
+    servers:
+      - localhost
+
+delete_users: []
+

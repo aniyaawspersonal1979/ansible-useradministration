@@ -1,0 +1,4 @@
+---
+# handlers file for ssh
+- name: sshd_reload
+  service: name=sshd state=reloaded
