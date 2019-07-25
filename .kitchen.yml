@@ -1,0 +1,23 @@
+---
+driver:
+  name: docker
+
+platforms:
+  - name: centos
+
+provisioner:
+  name: ansible_playbook
+  ansible_verbose: false
+  ansible_verbosity: 1
+  hosts: localhost
+  additional_copy_path:
+    - "."
+
+verifier:
+  name: inspec
+
+suites:
+  - name: default
+    verifier:
+      inspec_tests:
+        - test/integration/default
